@@ -320,7 +320,6 @@
       state.busy = true;
       state.error = "";
       renderPanel();
-      // One key per attempt: a retry after a dropped connection can't double-book.
       state.idempotencyKey ??= crypto.randomUUID();
       let res;
       try {

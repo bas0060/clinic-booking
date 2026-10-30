@@ -1,6 +1,5 @@
 import pg from "pg";
 
-// Serverless functions open many short-lived instances, so keep each pool small there.
 const max = process.env.AWS_LAMBDA_FUNCTION_NAME ? 2 : 10;
 
 export const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL, max });

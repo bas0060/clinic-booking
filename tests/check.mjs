@@ -1,5 +1,3 @@
-// Black-box checks against a running API.
-// Usage: BASE_URL=http://localhost:3000 API_KEY=... node tests/check.mjs
 import assert from "node:assert/strict";
 
 const BASE = (process.env.BASE_URL ?? "http://localhost:3000").replace(/\/$/, "");

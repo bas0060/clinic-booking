@@ -40,7 +40,6 @@ const toIso = (value) => {
   return Number.isNaN(ms) ? null : new Date(ms).toISOString();
 };
 
-// Same JSON with keys in a different order must hash the same.
 const canonical = (value) => {
   if (Array.isArray(value)) return `[${value.map(canonical).join(",")}]`;
   if (value && typeof value === "object") {
@@ -58,10 +57,8 @@ const decodeCursor = (cursor) => {
   return /^\d{1,18}$/.test(text) ? text : null;
 };
 
-// Serialises work per name so concurrent requests with the same email or key line up.
 const lock = (db, name) => db.query("SELECT pg_advisory_xact_lock(hashtextextended($1, 0))", [name]);
 
-// Records an attempt for this email. Returns 0 when allowed, or the seconds to wait.
 const takeAttempt = (email) =>
   withTx(async (db) => {
     await lock(db, `rate:${email}`);
@@ -109,13 +106,11 @@ const createBooking = async (db, body) => {
 const app = express();
 app.disable("x-powered-by");
 
-// When served as a Netlify function the path may arrive with the function prefix.
 app.use((req, _res, next) => {
   req.url = req.url.replace(/^\/\.netlify\/functions\/api(?=\/|\?|$)/, "") || "/";
   next();
 });
 
-// The web page and its config are public; the API itself is not.
 app.use(express.static(publicDir));
 app.get("/config.js", (_req, res) => {
   res.type("application/javascript").send(`window.CLINIC_API_KEY = ${JSON.stringify(API_KEY)};\n`);
