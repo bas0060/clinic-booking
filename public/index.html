@@ -1,0 +1,410 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Book an appointment</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      color-scheme: light;
+      --paper: #f4f7f8;
+      --surface: #ffffff;
+      --ink: #16282e;
+      --muted: #587077;
+      --line: #d3dde0;
+      --petrol: #0e5c73;
+      --petrol-deep: #0a4658;
+      --tint: #e2eff3;
+      --ok: #1b6e45;
+      --ok-tint: #e3f2ea;
+      --bad: #a8322a;
+      --bad-tint: #f9e8e6;
+      --font: "Atkinson Hyperlegible", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    }
+    * { box-sizing: border-box; }
+    html { -webkit-text-size-adjust: 100%; }
+    body {
+      margin: 0;
+      background: var(--paper);
+      color: var(--ink);
+      font: 400 1.0625rem/1.5 var(--font);
+    }
+    h1, h2, h3, p { margin: 0; }
+    button, input, select { font: inherit; color: inherit; }
+    :focus-visible { outline: 3px solid var(--petrol); outline-offset: 2px; }
+
+    .page {
+      max-width: 68rem;
+      margin: 0 auto;
+      padding: 2.5rem 1.25rem 4rem;
+    }
+    .intro { max-width: 36rem; margin-bottom: 2rem; }
+    .intro h1 { font-size: clamp(2rem, 5vw, 2.75rem); line-height: 1.1; font-weight: 700; letter-spacing: -0.01em; }
+    .intro p { margin-top: 0.75rem; color: var(--muted); }
+
+    .layout { display: grid; gap: 2rem; align-items: start; }
+    @media (min-width: 52rem) {
+      .layout { grid-template-columns: minmax(0, 1fr) 22rem; gap: 3rem; }
+      .panel { position: sticky; top: 1.5rem; }
+    }
+
+    .filter { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1.5rem; flex-wrap: wrap; }
+    .filter label { font-weight: 700; }
+    select {
+      min-height: 2.75rem;
+      padding: 0.4rem 2.25rem 0.4rem 0.75rem;
+      border: 1.5px solid var(--line);
+      border-radius: 0.5rem;
+      background: var(--surface);
+    }
+
+    .day { display: grid; grid-template-columns: 4.25rem minmax(0, 1fr); gap: 1rem; padding: 1.25rem 0; border-top: 1.5px solid var(--line); }
+    .day:last-child { border-bottom: 1.5px solid var(--line); }
+    .date { text-align: left; line-height: 1.1; }
+    .date .num { display: block; font-size: 2.5rem; font-weight: 700; color: var(--petrol-deep); }
+    .date .rest { display: block; margin-top: 0.25rem; font-size: 0.9375rem; color: var(--muted); }
+    .times { display: flex; flex-wrap: wrap; gap: 0.625rem; align-content: flex-start; }
+
+    .slot {
+      min-width: 6.75rem;
+      min-height: 3.25rem;
+      padding: 0.45rem 0.9rem;
+      border: 1.5px solid var(--line);
+      border-radius: 0.5rem;
+      background: var(--surface);
+      text-align: left;
+      cursor: pointer;
+      line-height: 1.25;
+    }
+    .slot .t { display: block; font-weight: 700; }
+    .slot .who { display: block; font-size: 0.875rem; color: var(--muted); }
+    .slot:hover:not(:disabled) { border-color: var(--petrol); background: var(--tint); }
+    .slot[aria-pressed="true"],
+    .slot[aria-pressed="true"]:hover:not(:disabled) { background: var(--petrol); border-color: var(--petrol); color: #fff; }
+    .slot[aria-pressed="true"] .who { color: #d6eaf0; }
+    .slot:disabled { cursor: not-allowed; background: transparent; border-style: dashed; color: var(--muted); }
+    .slot:disabled .t { text-decoration: line-through; font-weight: 400; }
+
+    .note { padding: 1.25rem; border: 1.5px dashed var(--line); border-radius: 0.5rem; color: var(--muted); }
+
+    .panel { background: var(--surface); border: 1.5px solid var(--line); border-radius: 0.75rem; padding: 1.5rem; }
+    .panel h2 { font-size: 1.375rem; line-height: 1.2; }
+    .chosen { margin-top: 0.5rem; color: var(--muted); }
+    .chosen strong { color: var(--ink); }
+    form { margin-top: 1.25rem; display: grid; gap: 1rem; }
+    .field { display: grid; gap: 0.35rem; }
+    .field label { font-weight: 700; }
+    input {
+      width: 100%;
+      min-height: 2.875rem;
+      padding: 0.5rem 0.75rem;
+      border: 1.5px solid #9fb0b5;
+      border-radius: 0.5rem;
+      background: var(--surface);
+    }
+    input:focus-visible { border-color: var(--petrol); }
+    .btn {
+      min-height: 3rem;
+      padding: 0.6rem 1.25rem;
+      border: 1.5px solid var(--petrol);
+      border-radius: 0.5rem;
+      background: var(--petrol);
+      color: #fff;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .btn:hover:not(:disabled) { background: var(--petrol-deep); border-color: var(--petrol-deep); }
+    .btn:disabled { opacity: 0.55; cursor: not-allowed; }
+    .btn.quiet { background: transparent; color: var(--petrol-deep); }
+    .btn.quiet:hover:not(:disabled) { background: var(--tint); color: var(--petrol-deep); }
+    .btn.danger { background: transparent; border-color: var(--bad); color: var(--bad); }
+    .btn.danger:hover:not(:disabled) { background: var(--bad-tint); border-color: var(--bad); }
+
+    .status { margin-top: 1rem; padding: 0.75rem 0.9rem; border-radius: 0.5rem; background: var(--bad-tint); color: var(--bad); }
+    .status:empty { display: none; }
+
+    .done { display: grid; gap: 1rem; animation: settle 0.25s ease-out; }
+    @keyframes settle { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+    @media (prefers-reduced-motion: reduce) { .done { animation: none; } }
+    .badge { justify-self: start; padding: 0.2rem 0.65rem; border-radius: 999px; background: var(--ok-tint); color: var(--ok); font-weight: 700; font-size: 0.9375rem; }
+    .badge.cancelled { background: var(--bad-tint); color: var(--bad); }
+    dl { margin: 0; display: grid; gap: 0.75rem; }
+    dt { color: var(--muted); font-size: 0.9375rem; }
+    dd { margin: 0; font-weight: 700; overflow-wrap: anywhere; }
+    .ref { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-weight: 400; font-size: 0.9375rem; }
+    .actions { display: grid; gap: 0.625rem; }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <header class="intro">
+      <h1>Book an appointment</h1>
+      <p>Pick a time that suits you, add your details, and we’ll hold it for you.</p>
+    </header>
+
+    <div class="layout">
+      <section aria-labelledby="slots-title">
+        <h2 id="slots-title" class="sr-only" style="position:absolute;left:-9999px">Available times</h2>
+        <div class="filter">
+          <label for="provider">Doctor</label>
+          <select id="provider"><option value="">Anyone available</option></select>
+        </div>
+        <div id="slots" aria-live="polite"></div>
+      </section>
+
+      <aside class="panel" id="panel" aria-live="polite"></aside>
+    </div>
+  </main>
+
+  <script src="/config.js"></script>
+  <script>
+    const API_KEY = window.CLINIC_API_KEY || "";
+    const $ = (id) => document.getElementById(id);
+
+    const state = {
+      slots: [],
+      providers: new Set(),
+      selected: null,
+      booking: null,
+      busy: false,
+      error: "",
+      idempotencyKey: null,
+      draft: { name: "", email: "" },
+    };
+
+    const el = (tag, props = {}, ...kids) => {
+      const node = Object.assign(document.createElement(tag), props);
+      for (const kid of kids.flat()) {
+        if (kid !== null && kid !== undefined) node.append(kid);
+      }
+      return node;
+    };
+
+    const api = async (method, path, { body, headers } = {}) => {
+      const res = await fetch(path, {
+        method,
+        headers: { "Content-Type": "application/json", "X-API-Key": API_KEY, ...headers },
+        body: body ? JSON.stringify(body) : undefined,
+      });
+      const data = await res.json().catch(() => ({}));
+      return { ok: res.ok, status: res.status, data, retryAfter: res.headers.get("Retry-After") };
+    };
+
+    const dayFmt = new Intl.DateTimeFormat(undefined, { weekday: "long", day: "numeric", month: "long" });
+    const dayNum = new Intl.DateTimeFormat(undefined, { day: "numeric" });
+    const monthShort = new Intl.DateTimeFormat(undefined, { weekday: "short", month: "short" });
+    const timeFmt = new Intl.DateTimeFormat(undefined, { hour: "numeric", minute: "2-digit" });
+    const zoneFmt = new Intl.DateTimeFormat(undefined, { hour: "numeric", timeZoneName: "short" });
+    const dayKey = (d) => `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+    const zoneName = (d) => zoneFmt.formatToParts(d).find((p) => p.type === "timeZoneName")?.value ?? "";
+
+    const slotById = (id) => state.slots.find((s) => s.id === id);
+    const describe = (slot) => {
+      const start = new Date(slot.start);
+      const end = new Date(slot.end);
+      return `${dayFmt.format(start)}, ${timeFmt.format(start)} to ${timeFmt.format(end)} ${zoneName(start)}`;
+    };
+
+    async function loadSlots() {
+      const provider = $("provider").value;
+      const query = provider ? `?provider=${encodeURIComponent(provider)}` : "";
+      const res = await api("GET", `/slots${query}`).catch(() => null);
+      if (!res || !res.ok) {
+        $("slots").replaceChildren(el("p", { className: "note" }, "We couldn’t load the available times. Refresh the page to try again."));
+        return;
+      }
+      state.slots = res.data.slots;
+      if (!provider) {
+        for (const s of state.slots) state.providers.add(s.provider);
+        const select = $("provider");
+        const have = new Set([...select.options].map((o) => o.value));
+        for (const name of [...state.providers].sort()) {
+          if (!have.has(name)) select.append(el("option", { value: name, textContent: name }));
+        }
+      }
+      if (state.selected && !slotById(state.selected)?.available) state.selected = null;
+      renderSlots();
+      renderPanel();
+    }
+
+    function renderSlots() {
+      const now = Date.now();
+      const upcoming = state.slots.filter((s) => new Date(s.start).getTime() > now);
+      if (upcoming.length === 0) {
+        $("slots").replaceChildren(el("p", { className: "note" }, "There are no upcoming times right now. Please check back soon."));
+        return;
+      }
+      const days = new Map();
+      for (const s of upcoming) {
+        const key = dayKey(new Date(s.start));
+        if (!days.has(key)) days.set(key, []);
+        days.get(key).push(s);
+      }
+      const showDoctor = !$("provider").value;
+      const sections = [...days.values()].map((list) => {
+        const first = new Date(list[0].start);
+        const buttons = list.map((s) => {
+          const label = `${timeFmt.format(new Date(s.start))} with ${s.provider}${s.available ? "" : ", already booked"}`;
+          const btn = el("button", { type: "button", className: "slot", disabled: !s.available, ariaLabel: label },
+            el("span", { className: "t" }, timeFmt.format(new Date(s.start))),
+            showDoctor ? el("span", { className: "who" }, s.provider) : null);
+          btn.setAttribute("aria-pressed", String(state.selected === s.id));
+          btn.addEventListener("click", () => choose(s.id));
+          return btn;
+        });
+        return el("div", { className: "day" },
+          el("div", { className: "date" },
+            el("span", { className: "num" }, dayNum.format(first)),
+            el("span", { className: "rest" }, monthShort.format(first))),
+          el("div", { className: "times" }, buttons));
+      });
+      $("slots").replaceChildren(...sections);
+    }
+
+    function choose(id) {
+      state.selected = id;
+      state.booking = null;
+      state.error = "";
+      state.idempotencyKey = null;
+      renderSlots();
+      renderPanel();
+      if (window.matchMedia("(max-width: 51.99rem)").matches) $("panel").scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+
+    function renderPanel() {
+      const panel = $("panel");
+      if (state.booking) return renderConfirmation(panel);
+
+      const slot = slotById(state.selected);
+      if (!slot) {
+        panel.replaceChildren(
+          el("h2", {}, "Your details"),
+          el("p", { className: "chosen" }, "Choose a time from the list to continue."),
+          el("p", { className: "status", role: "alert" }, state.error));
+        return;
+      }
+
+      const name = el("input", { id: "name", name: "name", type: "text", autocomplete: "name", required: true, value: state.draft.name });
+      const email = el("input", { id: "email", name: "email", type: "email", autocomplete: "email", required: true, value: state.draft.email });
+      const submit = el("button", { type: "submit", className: "btn", disabled: state.busy }, state.busy ? "Booking…" : "Book this time");
+      const status = el("p", { className: "status", role: "alert" }, state.error);
+
+      const form = el("form", { noValidate: false },
+        el("div", { className: "field" }, el("label", { htmlFor: "name" }, "Full name"), name),
+        el("div", { className: "field" }, el("label", { htmlFor: "email" }, "Email"), email),
+        submit);
+
+      for (const [input, key] of [[name, "name"], [email, "email"]]) {
+        input.addEventListener("input", () => {
+          state.draft[key] = input.value;
+          state.idempotencyKey = null;
+        });
+      }
+      form.addEventListener("submit", (event) => {
+        event.preventDefault();
+        book(slot);
+      });
+
+      panel.replaceChildren(
+        el("h2", {}, "Your details"),
+        el("p", { className: "chosen" }, el("strong", {}, describe(slot)), ` with ${slot.provider}`),
+        form,
+        status);
+    }
+
+    async function book(slot) {
+      if (state.busy) return;
+      state.busy = true;
+      state.error = "";
+      renderPanel();
+      // One key per attempt: a retry after a dropped connection can't double-book.
+      state.idempotencyKey ??= crypto.randomUUID();
+      let res;
+      try {
+        res = await api("POST", "/bookings", {
+          headers: { "Idempotency-Key": state.idempotencyKey },
+          body: { slot_id: slot.id, name: state.draft.name, email: state.draft.email },
+        });
+      } catch {
+        state.busy = false;
+        state.error = "We couldn’t reach the clinic. Check your connection and try again.";
+        renderPanel();
+        return;
+      }
+      state.busy = false;
+      state.idempotencyKey = null;
+
+      if (res.ok) {
+        state.booking = res.data;
+        state.selected = null;
+        await loadSlots();
+        return;
+      }
+      if (res.status === 409) {
+        state.selected = null;
+        state.error = "That time was just taken. Please choose another.";
+        await loadSlots();
+        return;
+      }
+      if (res.status === 429) {
+        state.error = `Too many attempts with this email. Try again in ${res.retryAfter ?? "a few"} seconds.`;
+      } else if (res.status === 401) {
+        state.error = "Booking isn’t available right now. Please call the clinic.";
+      } else {
+        state.error = res.data.error ? capitalise(res.data.error) + "." : "Something went wrong. Please try again.";
+      }
+      renderPanel();
+    }
+
+    const capitalise = (text) => text.charAt(0).toUpperCase() + text.slice(1);
+
+    function renderConfirmation(panel) {
+      const b = state.booking;
+      const slot = slotById(b.slot_id);
+      const cancelled = b.status === "cancelled";
+      const cancel = el("button", { type: "button", className: "btn danger" }, "Cancel appointment");
+      const again = el("button", { type: "button", className: "btn quiet" }, "Book another time");
+
+      cancel.addEventListener("click", async () => {
+        cancel.disabled = true;
+        cancel.textContent = "Cancelling…";
+        const res = await api("DELETE", `/bookings/${encodeURIComponent(b.id)}`).catch(() => null);
+        if (res?.ok) {
+          state.booking = res.data;
+          await loadSlots();
+        } else {
+          cancel.disabled = false;
+          cancel.textContent = "Cancel appointment";
+          panel.append(el("p", { className: "status", role: "alert" }, "We couldn’t cancel that. Please try again."));
+        }
+      });
+      again.addEventListener("click", () => {
+        state.booking = null;
+        state.error = "";
+        renderPanel();
+      });
+
+      panel.replaceChildren(el("div", { className: "done" },
+        el("span", { className: cancelled ? "badge cancelled" : "badge" }, cancelled ? "Cancelled" : "Confirmed"),
+        el("h2", {}, cancelled ? "Your appointment is cancelled" : "You’re booked"),
+        el("dl", {},
+          slot ? [el("dt", {}, "When"), el("dd", {}, describe(slot)), el("dt", {}, "Doctor"), el("dd", {}, slot.provider)] : null,
+          el("dt", {}, "Name"), el("dd", {}, b.name),
+          el("dt", {}, "Email"), el("dd", {}, b.email),
+          el("dt", {}, "Booking reference"), el("dd", { className: "ref" }, b.id)),
+        el("div", { className: "actions" }, cancelled ? null : cancel, again)));
+    }
+
+    $("provider").addEventListener("change", () => {
+      state.selected = null;
+      loadSlots();
+    });
+
+    renderPanel();
+    loadSlots();
+  </script>
+</body>
+</html>

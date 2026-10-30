@@ -1,0 +1,29 @@
+[build]
+  publish = "public"
+  functions = "netlify/functions"
+
+# Send every API path to the one Express function. Static files in /public win first.
+[[redirects]]
+  from = "/reset"
+  to = "/.netlify/functions/api/reset"
+  status = 200
+
+[[redirects]]
+  from = "/slots"
+  to = "/.netlify/functions/api/slots"
+  status = 200
+
+[[redirects]]
+  from = "/bookings"
+  to = "/.netlify/functions/api/bookings"
+  status = 200
+
+[[redirects]]
+  from = "/bookings/*"
+  to = "/.netlify/functions/api/bookings/:splat"
+  status = 200
+
+[[redirects]]
+  from = "/config.js"
+  to = "/.netlify/functions/api/config.js"
+  status = 200
