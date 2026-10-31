@@ -1,3 +1,5 @@
+// Black-box checks against a running API.
+// Usage: BASE_URL=http://localhost:3000 API_KEY=... node tests/check.mjs
 import assert from "node:assert/strict";
 
 const BASE = (process.env.BASE_URL ?? "http://localhost:3000").replace(/\/$/, "");
@@ -33,12 +35,13 @@ await check("level 2: missing or wrong key returns 401", async () => {
 });
 
 await check("level 1: reset, list in order, provider filter, availability", async () => {
-  const r = await reset([slot("b", 5), slot("a", 2), slot("c", 3, "Dr Bola"), slot("past", -2)]);
+  const a = slot("a", 2);
+  const r = await reset([slot("b", 5), a, slot("c", 3, "Dr Bola"), slot("past", -2)]);
   assert.equal(r.status, 200);
   const all = (await call("GET", "/slots")).json.slots;
   assert.deepEqual(all.map((s) => s.id), ["past", "a", "c", "b"]);
   assert.ok(all.every((s) => s.available === true));
-  assert.equal(all[1].start, slot("a", 2).start);
+  assert.equal(all[1].start, a.start);
   const bola = (await call("GET", "/slots?provider=Dr%20Bola")).json.slots;
   assert.deepEqual(bola.map((s) => s.id), ["c"]);
 });

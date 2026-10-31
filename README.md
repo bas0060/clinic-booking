@@ -39,10 +39,13 @@ BASE_URL=http://localhost:3000 API_KEY=your-key node tests/check.mjs
 
 ## Deploy
 
-**Netlify:** import the repo (publish dir `public`, functions `netlify/functions` come from `netlify.toml`),
-then set `DATABASE_URL` and `API_KEY` in Site settings, Environment variables.
-**Render:** build `npm install`, start `npm start`, same two environment variables.
+**Cloudflare Workers** (`wrangler.jsonc`, entry `src/worker.js`): connect the repo in the dashboard
+(Workers & Pages, Create application, Import a repository), keep the deploy command `npx wrangler deploy`,
+then add `DATABASE_URL` and `API_KEY` as **Secrets** under Settings, Variables and Secrets.
+The same code also runs on Render (`npm start`) and Netlify (`netlify.toml`).
 Run `npm run migrate` once against the production database (or paste `schema.sql` into the Neon SQL editor).
+
+Local Workers runtime: put `DATABASE_URL` and `API_KEY` in a `.dev.vars` file, then `npm run cf:dev`.
 
 ## Note on the web page
 

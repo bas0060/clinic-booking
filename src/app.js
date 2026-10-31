@@ -1,10 +1,12 @@
 import express from "express";
 import { createHash, randomUUID, timingSafeEqual } from "node:crypto";
 import { fileURLToPath } from "node:url";
-import { pool, withTx } from "./db.js";
+import { onWorkers, pool, withTx } from "./db.js";
 
-const API_KEY = process.env.API_KEY ?? "";
-const publicDir = fileURLToPath(new URL("../public", import.meta.url));
+// Read per request: some hosts only expose environment variables once a request arrives.
+const apiKey = () => process.env.API_KEY ?? "";
+// import.meta.url is not a real file URL inside a Workers bundle, and static files are served by the platform there.
+const publicDir = onWorkers ? "" : fileURLToPath(new URL("../public", import.meta.url));
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const ATTEMPT_LIMIT = 5;
@@ -28,9 +30,10 @@ const toBooking = (row) => ({
 });
 
 const keyMatches = (given) => {
-  if (!API_KEY || typeof given !== "string") return false;
+  const expected = apiKey();
+  if (!expected || typeof given !== "string") return false;
   const a = Buffer.from(given);
-  const b = Buffer.from(API_KEY);
+  const b = Buffer.from(expected);
   return a.length === b.length && timingSafeEqual(a, b);
 };
 
@@ -40,6 +43,7 @@ const toIso = (value) => {
   return Number.isNaN(ms) ? null : new Date(ms).toISOString();
 };
 
+// Same JSON with keys in a different order must hash the same.
 const canonical = (value) => {
   if (Array.isArray(value)) return `[${value.map(canonical).join(",")}]`;
   if (value && typeof value === "object") {
@@ -57,8 +61,10 @@ const decodeCursor = (cursor) => {
   return /^\d{1,18}$/.test(text) ? text : null;
 };
 
+// Serialises work per name so concurrent requests with the same email or key line up.
 const lock = (db, name) => db.query("SELECT pg_advisory_xact_lock(hashtextextended($1, 0))", [name]);
 
+// Records an attempt for this email. Returns 0 when allowed, or the seconds to wait.
 const takeAttempt = (email) =>
   withTx(async (db) => {
     await lock(db, `rate:${email}`);
@@ -106,14 +112,16 @@ const createBooking = async (db, body) => {
 const app = express();
 app.disable("x-powered-by");
 
+// When served as a Netlify function the path may arrive with the function prefix.
 app.use((req, _res, next) => {
   req.url = req.url.replace(/^\/\.netlify\/functions\/api(?=\/|\?|$)/, "") || "/";
   next();
 });
 
-app.use(express.static(publicDir));
+// The web page and its config are public; the API itself is not.
+if (!onWorkers) app.use(express.static(publicDir)); // on Workers, the platform serves static files
 app.get("/config.js", (_req, res) => {
-  res.type("application/javascript").send(`window.CLINIC_API_KEY = ${JSON.stringify(API_KEY)};\n`);
+  res.type("application/javascript").send(`window.CLINIC_API_KEY = ${JSON.stringify(apiKey())};\n`);
 });
 
 app.use((req, res, next) => {

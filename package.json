@@ -3,15 +3,22 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
-  "engines": { "node": ">=20" },
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
     "start": "node server.js",
     "dev": "node --env-file=.env server.js",
-    "migrate": "node --env-file=.env scripts/migrate.js"
+    "migrate": "node --env-file=.env scripts/migrate.js",
+    "deploy": "wrangler deploy",
+    "cf:dev": "wrangler dev"
   },
   "dependencies": {
     "express": "^5.1.0",
     "pg": "^8.13.0",
     "serverless-http": "^3.2.0"
+  },
+  "devDependencies": {
+    "wrangler": "^4.156.0"
   }
 }
